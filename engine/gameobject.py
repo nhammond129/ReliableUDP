@@ -1,6 +1,8 @@
 from collections import defaultdict
 from weakref import WeakSet
 
+import bson
+
 import math
 
 class GameObject:
@@ -8,13 +10,13 @@ class GameObject:
 	objects = {}
 	w, h = 10, 10
 	def __init__(self, graph, id, x=0, y=0):
-		self.tarx, self.tary = 0, 0
+		self.serialized_attrs=['x','y']
 
 		self.graph = graph
 		self.id = id
 		self.x, self.y = x, y
-		
-		self.objects[self.id] = self
+
+		self.tarx, self.tary = 0, 0
 
 	@classmethod
 	def get_instances(cls):
