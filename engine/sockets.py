@@ -27,30 +27,6 @@ class ThreadedUDPSocket(UDPSocket):
         """
         raise Exception("Not implemented.")
 
-class RequestHandler(socketserver.BaseRequestHandler):
-    def __init__(self, *args, **kwargs):
-        socketserver.BaseRequestHandler.__init__(self, *args, **kwargs)
-        
-
-
-class ThreadedUDPRequestHandler(socketserver.BaseRequestHandler):
-    timeout = 30
-    def handle(self):
-        data = self.request[0].strip()
-        socket = self.request[1]
-        print("client: {}, wrote: {}".format(self.client_address, data))
-        socket.sendto(data.upper(), self.client_address)
-
-        while True:
-            try:
-                data, (addr, port) = socket.recvfrom(4096)
-            except socket.timeout:
-                break
-
-
-class ThreadedUDPServer(socketserver.ThreadingMixIn, socketserver.UDPServer):
-    pass
-
 def main():
     class PrintSocket(ThreadedUDPSocket):
         def __init__(self, *args, **kwargs):
@@ -58,12 +34,23 @@ def main():
         
         def on_recv(self, addr, port, data):
             print(f"{addr}:{port} | {data}")
+
+    class EchoSocket(ThreadedUDPSocket):
+        def __init__(self, *args, **kwargs):
+            ThreadedUDPSocket.__init__(self, *args, **kwargs)
+        
+        def on_recv(self, addr, port, data):
+            self.sendto(data.upper(), (addr, port))
+
     
     client = PrintSocket(host='localhost', port=0)
-    server = ThreadedUDPServer(('', 8888), ThreadedUDPRequestHandler)
-    Thread(target=server.serve_forever).start()
+    server = EchoSocket(host='', port=8888)
 
     client.sendto(b"hello", ('localhost', 8888))
+    client.sendto(b"one", ('localhost', 8888))
+    client.sendto(b"two", ('localhost', 8888))
+    client.sendto(b"three", ('localhost', 8888))
+    client.sendto(b"four", ('localhost', 8888))
 
 
 
