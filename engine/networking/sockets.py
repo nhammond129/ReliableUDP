@@ -42,7 +42,6 @@ def main():
         def on_recv(self, addr, port, data):
             self.sendto(data.upper(), (addr, port))
 
-    
     client = PrintSocket(host='localhost', port=0)
     server = EchoSocket(host='', port=8888)
 
