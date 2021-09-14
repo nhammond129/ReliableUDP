@@ -1,32 +1,28 @@
-#import nulltk as tk
-import pygame
-import pygame
-import tkinter as tk
-from tkinter import *
-import os
+from engine.networking.connection import ClientConnection, ServerConnection
+from engine.networking.packets import TestPacket, TestPacket2
 
-root = tk.Tk()
-embed = tk.Frame(root, width = 500, height = 500) #creates embed frame for pygame window
-embed.grid(columnspan = (600), rowspan = 500) # Adds grid
-embed.pack(side = LEFT) #packs window to the left
-buttonwin = tk.Frame(root, width = 75, height = 500)
-buttonwin.pack(side = LEFT)
-os.environ['SDL_WINDOWID'] = str(embed.winfo_id())
-os.environ['SDL_VIDEODRIVER'] = 'windib'
-screen = pygame.display.set_mode((500,500))
-screen.fill(pygame.Color(255,255,255))
-pygame.display.init()
-pygame.display.update()
-def draw():
-    pygame.draw.circle(screen, (0,0,0), (250,250), 125)
-    pygame.display.update()
-    root.update()
-button1 = Button(buttonwin,text = 'Draw',  command=draw)
-button1.pack(side=LEFT)
+import time
 
-while True:
-    pygame.display.update()
-    root.update()      
+def main():
+    ServerConn = ServerConnection('', 8888)
+    ClientConn = ClientConnection('localhost', 8888)
+
+    while True:
+        # print received packets
+        while True:
+            pkt = ServerConn.read()
+            if pkt is not None: print(pkt)
+            else: break
+        while True:
+            pkt = ClientConn.read()
+            if pkt is not None: print(pkt)
+            else: break
+        
+        ClientConn.send(TestPacket2(0.5))
+        time.sleep(1)
+        ServerConn.send_all(TestPacket(3))
+        time.sleep(1)
+
 
 if __name__ == "__main__":
 	main()
