@@ -87,8 +87,6 @@ class Connection(ThreadedUDPSocket):
 		proto_id, seq, ack_seq, ack_bits, payload_len, payload_type, data = encoding.unpack(
 			"IIIIII*", data
 		)
-
-		print('\n\n', proto_id, seq, ack_seq, ack_bits, payload_len, payload_type, data)
 		
 		remaining_len = len(data)
 
