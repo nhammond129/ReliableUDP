@@ -39,11 +39,11 @@ class Display:
             print(event.type, pygame.event.event_name(event.type))
 
     def draw(self, world):
-        self.screen.fill(pygame.color.THECOLORS["gray"])
+        self.screen.fill((25,25,25))
         for shape in world.shapes:
             x,y = shape.body.position
             r = 0.5 * shape.area**0.5
-            pygame.draw.circle(self.screen, (255, 255, 255), (x,y), r)
+            pygame.draw.circle(self.screen, (200, 200, 200), (x,y), r)
         pygame.display.flip()
 
 class Game:
