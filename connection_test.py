@@ -45,7 +45,7 @@ class ConnectionUI(tk.LabelFrame):
 
     def _read_loop(self):
         self.buffer_label.config(text=f"buffer: {self.conn.buffer}")
-        self.ack_label.config(text=f"ack: {self.conn.ack}, {self.conn.ack_bitfields}")
+        self.ack_label.config(text=f"ack: {self.conn.ack}, {self.conn.ack_bitfields:0b}")
         self.sequence_label.config(text=f"seq: {self.conn.sequence}")
         self.recvd_sequence_label.config(text=f"last recv'd seq: {self.conn.last_received_seqnum}")
         self.unacked_label.config(text=f"unacked pkts: {self.conn.unacked}")
