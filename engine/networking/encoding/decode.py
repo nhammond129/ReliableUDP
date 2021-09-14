@@ -12,6 +12,10 @@ def decode(fmt, data, handle_trail=handle_trail_error):
 	return DECODERS[fmt[0]](fmt, data, handle_trail)
 unpack = decode
 
+def decode_star(fmt, data, handle_trail):
+	return (data,) + handle_trail(b'')
+DECODERS['*'] = decode_star
+
 def decode_unicode_string(fmt, data, handle_trail):
 	if len(data) < 4:
 		raise ValueError('Truncated data')

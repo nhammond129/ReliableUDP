@@ -12,6 +12,12 @@ def encode(fmt, data):
 		return b''
 	return ENCODERS[fmt[0]](fmt, data)
 
+def encode_star(fmt, data):
+	if len(data) != 1:
+		raise ValueError('Need single bytestring for *')
+	return data[0]
+ENCODERS['*'] = encode_star
+
 def encode_unicode_string(fmt, data):
 	subject = data[0]
 	block = subject.encode('utf-16le')
