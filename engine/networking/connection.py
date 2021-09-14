@@ -1,4 +1,5 @@
 import sockets
+import bson
 
 class Connection:
 	def __init__(self, addr, port):
