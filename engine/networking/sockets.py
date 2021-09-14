@@ -12,10 +12,10 @@ class ThreadedUDPSocket(UDPSocket):
         UDPSocket.__init__(self, *args, **kwargs)
         self.bufsize = bufsize
         self._alive = True
-        self._thread = Thread(target=self.daemon)
+        self._thread = Thread(target=self._daemon)
         self._thread.start()
     
-    def daemon(self):
+    def _daemon(self):
         while self._alive:
             data, (addr, port) = self.recvfrom(self.bufsize)
             self.on_recv(addr, port, data)
