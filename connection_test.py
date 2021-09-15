@@ -8,7 +8,7 @@ class DebugLog(tk.Text):
     def __init__(self, master, *args, **kwargs):
         tk.Text.__init__(self, master, *args, **kwargs)
         self.config(state=tk.DISABLED)
-    
+
     def log(self, msg):
         self.config(state=tk.NORMAL)
         self.insert(tk.END, msg + '\n')
