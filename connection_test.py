@@ -3,11 +3,32 @@ from engine.networking.packets import TestPacket, TestPacket2
 
 import nulltk as tk
 import time
+import re
 
 class DebugLog(tk.Text):
     def __init__(self, master, *args, **kwargs):
         tk.Text.__init__(self, master, *args, **kwargs)
         self.config(state=tk.DISABLED)
+
+        self.tag_config('Classname', foreground='green')
+        self._tags = {
+            'Classname': '(TestPacket2|TestPacket)'
+        }
+
+        self.after(10, self._retag)
+    
+    def _retag(self):
+        for tag in self._tags.keys():
+            self.tag_remove(tag, '1.0', tk.END)
+        text = self.get('1.0', tk.END)
+
+        for tag, pattern in self._tags.items():
+            matches = re.finditer(pattern, text)
+            for m in matches:
+                self.tag_add(tag, f'1.0 + {m.start()} chars', f'1.0 + {m.end()} chars')
+        
+
+        self.after(10, self._retag)
 
     def log(self, msg):
         self.config(state=tk.NORMAL)
