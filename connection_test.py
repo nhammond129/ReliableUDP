@@ -54,9 +54,9 @@ def main():
         server.send_all(TestPacket2(0.4))
 
     def read_packets():
-        print("client1:\n\t", client1.read_all())
-        print("client2:\n\t", client2.read_all())
-        print("server:\n\t",  server.read_all())
+        print("client1:\n\t", [p for p in client1.read()])
+        print("client2:\n\t", [p for p in client2.read()])
+        print("server:\n\t",  [p for c,p in server.read() ])
 
     start_time = time.time()
     packets_sent = 0
