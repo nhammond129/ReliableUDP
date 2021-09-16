@@ -59,21 +59,10 @@ class ReliableUDPConnection:
 		self.socket.sendto(data, (self.host, self.port))
 		self.unacked[self.sequence] = data
 		self.sequence += 1
-	
-	def can_read(self):
-		return (len(self.packet_recvd_buffer) > 0)
-
-	def read_all(self):
-		out = []
-		while self.can_read():
-			out.append(self.read())
-		return out
 
 	def read(self):
 		if len(self.packet_recvd_buffer):
-			return self.packet_recvd_buffer.pop(0)
-		else:
-			return None
+			yield self.packet_recvd_buffer.pop(0)
 
 	def on_recv(self, addr, port, data):
 		self.buffer += data
@@ -178,13 +167,6 @@ class Server:
 		self.connections[client].send(packet)
 
 	def read(self):
-		out = {}
 		for client, conn in tuple(self.connections.items()):
-			out[client] = conn.read()
-		return out
-
-	def read_all(self):
-		out = {}
-		for client, conn in tuple(self.connections.items()):
-			out[client] = conn.read_all()
-		return out
+			for out in conn.read():
+				yield (client, out)
