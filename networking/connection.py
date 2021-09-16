@@ -3,7 +3,7 @@ from .sockets import ThreadedUDPSocket
 from .encoding import pack, unpack
 from .packets import PACKETS
 
-class Connection:
+class ReliableUDPConnection:
 	"""
 	Packets will have the following structure:
 	[uint protocol id]
@@ -119,11 +119,11 @@ class Connection:
 		else:
 			raise Exception(f"Undecoded packet of type {payload_type}")
 
-		if Connection.sequence_greater_than(seq, self.ack):
+		if ReliableUDPConnection.sequence_greater_than(seq, self.ack):
 			# received a newer packet, ack it and shift ack bits
 			self.ack_bitfields << (seq - self.ack)
 			self.ack = seq
-		elif Connection.sequence_greater_than(seq, self.ack - 33):
+		elif ReliableUDPConnection.sequence_greater_than(seq, self.ack - 33):
 			# set corresponding ack bit
 			self.ack_bitfields & (1 << abs(self.ack - seq))
 		else:
@@ -148,7 +148,7 @@ class Connection:
 		return (decoded_pkts + rest, trailing_data)
 
 def Client(host, port, socketclass=ThreadedUDPSocket):
-	conn = Connection(host, port)
+	conn = ReliableUDPConnection(host, port)
 	conn.socket = socketclass(host, 0, on_recv = conn.on_recv)
 	return conn
 
@@ -158,7 +158,7 @@ class Server:
 		self.connections = {}
 
 	def add_client(self, addr, port):
-		conn = Connection(addr, port)
+		conn = ReliableUDPConnection(addr, port)
 		conn.socket = self.socket
 		self.connections[(addr, port)] = conn
 

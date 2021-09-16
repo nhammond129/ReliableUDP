@@ -1,4 +1,4 @@
-from networking.connection import Connection, Client, Server
+from networking.connection import ReliableUDPConnection, Client, Server
 from networking.encoding import pack, unpack
 import networking.packets as packets
 
