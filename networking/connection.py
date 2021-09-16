@@ -154,9 +154,8 @@ def Client(host, port, socketclass: socket.socket = ThreadedUDPSocket):
 	return conn
 
 class Server:
-	def __init__(self, host, port, connectionclass=ReliableUDPConnection, socketclass=ThreadedUDPSocket):
+	def __init__(self, host, port, socketclass=ThreadedUDPSocket):
 		self.socket = socketclass(host, port, on_recv=self.on_recv)
-		self.connectionclass = connectionclass
 		self.connections = {}
 
 	def add_client(self, addr, port):
