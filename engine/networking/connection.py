@@ -1,9 +1,11 @@
+from threading import Thread
+import ctypes
 from engine.networking.encoding.encode import pack
 from engine.networking.sockets import ThreadedUDPSocket
 import engine.networking.encoding as encoding
 import engine.networking.packets as packets
 
-class Connection(ThreadedUDPSocket):
+class Connection:
 	"""
 	Packets will have the following structure:
 	[uint protocol id]
@@ -16,22 +18,21 @@ class Connection(ThreadedUDPSocket):
 
 	Thus header length is 24 bytes.
 	"""
-	protocol_id = 6969
-	def __init__(self, host, port, *args, **kwargs):
-		ThreadedUDPSocket.__init__(self, host, port, *args, **kwargs)
+	protocol_id = 1342
+	def __init__(self, host, port):
 		self.host = host
 		self.port = port
 		self.buffer = b''
-		self.ack = 0
-		self.ack_bitfields = 0
+		self.ack: ctypes.uint32 = 0
+		self.ack_bitfields: ctypes.uint32 = 0
+		self.sequence: ctypes.uint32 = 0
+		self.last_acked_seq: ctypes.uint32 = 0
 		self.unacked = {}
-		self.sequence = 0
-		self.last_received_seqnum = 0
 
 		self.packet_recvd_buffer = []
 	
 	@classmethod
-	def sequence_greater_than(seq1: int, seq2: int):
+	def sequence_greater_than(klass, seq1: int, seq2: int):
 		"""
 		Returns true if seq1 is 'greater' than seq2.
 		Sequence numbers are 32bit unsigned ints
@@ -53,7 +54,22 @@ class Connection(ThreadedUDPSocket):
 			payload
 		)
 		return data
+
+	def send(self, packet):
+		data = self.encode_packet(packet)
+		self.socket.sendto(data, (self.host, self.port))
+		self.unacked[self.sequence] = data
+		self.sequence += 1
 	
+	def can_read(self):
+		return (len(self.packet_recvd_buffer) > 0)
+
+	def read_all(self):
+		out = []
+		while self.can_read():
+			out.append(self.read())
+		return out
+
 	def read(self):
 		if len(self.packet_recvd_buffer):
 			return self.packet_recvd_buffer.pop(0)
@@ -105,38 +121,70 @@ class Connection(ThreadedUDPSocket):
 		else:
 			raise Exception(f"Undecoded packet of type {payload_type}")
 
-		# set last_recvd_seq to seq
-		#	shift our local ack stuff in response
-		
-		# note down the ack_seq and ack_bits received, determine whether to resend old packets?
-		# cache pkts on send, save until ack'd if "must_resend = true" (or similar flag?)
+		if Connection.sequence_greater_than(seq, self.ack):
+			# received a newer packet, ack it and shift ack bits
+			self.ack_bitfields << (seq - self.ack)
+			self.ack = seq
+		elif Connection.sequence_greater_than(seq, self.ack - 33):
+			# set corresponding ack bit
+			self.ack_bitfields & (1 << abs(self.ack - seq))
+		else:
+			# older than the the previous 33 packets
+			# let it go unacked
+			# TODO: let packets require acking, send special ack-packet for them if they drop too far?
+			pass
+
+		# sequence number was acked
+		if ack_seq in self.unacked:
+			del self.unacked[ack_seq]
+		for ack_bit in range(0, 32):
+			# is that seqnum's ack bit set?
+			if ((ack_bits >> ack_bit) & 0x1):
+				# it was acked
+				ackable = (ack_seq - ack_bit)
+				if ackable in self.unacked:
+					del self.unacked[ackable]
 		
 		rest, trailing_data = self.decode(trailing_data)
 
 		return (decoded_pkts + rest, trailing_data)
 
-class ClientConnection(Connection):
-	def __init__(self, host, port, *args, **kwargs):
-		Connection.__init__(self, host, 0, *args, **kwargs)
-		self.port = port
+def Client(host, port, socketclass=ThreadedUDPSocket):
+	conn = Connection(host, port)
+	conn.socket = socketclass(host, 0, on_recv = conn.on_recv)
+	return conn
 
-	def send(self, packet):
-		data = self.encode_packet(packet)
-		self.sendto(data, (self.host, self.port))
-		self.sequence += 1
+class Server:
+	def __init__(self, host, port, socketclass=ThreadedUDPSocket):
+		self.socket = socketclass(host, port, on_recv=self.on_recv)
+		self.connections = {}
 
-class ServerConnection(Connection):
-	def __init__(self, host, port, *args, **kwargs):
-		Connection.__init__(self, host, port, *args, **kwargs)
-		self.clients = set()
+	def add_client(self, addr, port):
+		conn = Connection(addr, port)
+		conn.socket = self.socket
+		self.connections[(addr, port)] = conn
+
 	def on_recv(self, addr, port, data):
-		self.buffer += data
-		packets, self.buffer = self.decode(self.buffer)
-		self.packet_recvd_buffer.extend(packets)
-		self.clients.add((addr, port))
+		client = (addr, port)
+		if client not in self.connections:
+			self.add_client(addr, port)
+		self.connections[client].on_recv(addr, port, data)
 
 	def send_all(self, packet):
-		data = self.encode_packet(packet)
-		self.sequence += 1
-		for c in self.clients:
-			self.sendto(data, c)
+		for client, conn in tuple(self.connections.items()):
+			conn.send(packet)
+	
+	def send_to(self, client, packet):
+		self.connections[client].send(packet)
+
+	def read(self):
+		out = {}
+		for client, conn in tuple(self.connections.items()):
+			out[client] = conn.read()
+		return out
+
+	def read_all(self):
+		out = {}
+		for client, conn in tuple(self.connections.items()):
+			out[client] = conn.read_all()
+		return out

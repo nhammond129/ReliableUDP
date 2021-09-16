@@ -8,8 +8,9 @@ class UDPSocket(socket.socket):
         self.bind((host, port))
 
 class ThreadedUDPSocket(UDPSocket):
-    def __init__(self, *args, bufsize=4096, **kwargs):
+    def __init__(self, *args, bufsize=4096, on_recv=None, **kwargs):
         UDPSocket.__init__(self, *args, **kwargs)
+        self.on_recv_callback = on_recv
         self.bufsize = bufsize
         self._alive = True
         self._thread = Thread(target=self._daemon)
@@ -25,33 +26,7 @@ class ThreadedUDPSocket(UDPSocket):
         (Abstract method)
         Event callback for when the socket receives data.
         """
-        raise Exception("Not implemented.")
-
-def main():
-    class PrintSocket(ThreadedUDPSocket):
-        def __init__(self, *args, **kwargs):
-            ThreadedUDPSocket.__init__(self, *args, **kwargs)
-        
-        def on_recv(self, addr, port, data):
-            print(f"{addr}:{port} | {data}")
-
-    class EchoSocket(ThreadedUDPSocket):
-        def __init__(self, *args, **kwargs):
-            ThreadedUDPSocket.__init__(self, *args, **kwargs)
-        
-        def on_recv(self, addr, port, data):
-            self.sendto(data.upper(), (addr, port))
-
-    client = PrintSocket(host='localhost', port=0)
-    server = EchoSocket(host='', port=8888)
-
-    client.sendto(b"hello", ('localhost', 8888))
-    client.sendto(b"one", ('localhost', 8888))
-    client.sendto(b"two", ('localhost', 8888))
-    client.sendto(b"three", ('localhost', 8888))
-    client.sendto(b"four", ('localhost', 8888))
-
-
-
-if __name__ == "__main__":
-    main()
+        if self.on_recv_callback:
+            self.on_recv_callback(addr, port, data)
+        else:
+            raise Exception("Not implemented / no callback set")
