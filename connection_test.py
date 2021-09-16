@@ -1,5 +1,5 @@
-from engine.networking.connection import Connection, Client, Server
-from engine.networking.packets import TestPacket, TestPacket2
+from networking.connection import Connection, Client, Server
+from networking.packets import TestPacket, TestPacket2
 
 import nulltk as tk
 import time

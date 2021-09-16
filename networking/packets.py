@@ -1,4 +1,4 @@
-import engine.networking.encoding as encoding
+from .encoding import pack, unpack
 PACKETS = {}
 
 def packet(id):
@@ -15,11 +15,11 @@ class TestPacket:
 		self.test_number = test_number
 
 	def encode(self):
-		return encoding.pack(self.format, self.test_number)
+		return pack(self.format, self.test_number)
 
 	@classmethod
 	def decode(cls, data):
-		test_number, = encoding.unpack(cls.format, data)
+		test_number, = unpack(cls.format, data)
 		return cls(test_number)
 
 	def __str__(self):
@@ -31,11 +31,11 @@ class TestPacket2:
 		self.test_number = test_number
 
 	def encode(self):
-		return encoding.pack(self.format, self.test_number)
+		return pack(self.format, self.test_number)
 
 	@classmethod
 	def decode(cls, data):
-		test_number, = encoding.unpack(cls.format, data)
+		test_number, = unpack(cls.format, data)
 		return cls(test_number)
 
 	def __str__(self):

@@ -1,9 +1,7 @@
-from threading import Thread
 import ctypes
-from engine.networking.encoding.encode import pack
-from engine.networking.sockets import ThreadedUDPSocket
-import engine.networking.encoding as encoding
-import engine.networking.packets as packets
+from .sockets import ThreadedUDPSocket
+from .encoding import pack, unpack
+from .packets import PACKETS
 
 class Connection:
 	"""
@@ -47,7 +45,7 @@ class Connection:
 
 	def encode_packet(self, packet):
 		payload = packet.encode()
-		data = encoding.pack('IIIIII*',
+		data = pack('IIIIII*',
 			self.protocol_id, self.sequence,
 			self.ack, self.ack_bitfields,
 			len(payload), packet.packet_id,
@@ -86,7 +84,7 @@ class Connection:
 		returns (list: Packet, trailing)
 		"""
 		if not data: return [], b''
-		start_idx = data.find(encoding.pack('I', self.protocol_id))
+		start_idx = data.find(pack('I', self.protocol_id))
 		if start_idx > 0:
 			# found, but after some other data? - discard "old" bytes
 			print(f"Discarding {start_idx} bytes to resync")
@@ -100,7 +98,7 @@ class Connection:
 		if length < 24: # less than packet header, wait for more data.
 			return [], data
 		
-		proto_id, seq, ack_seq, ack_bits, payload_len, payload_type, data = encoding.unpack(
+		proto_id, seq, ack_seq, ack_bits, payload_len, payload_type, data = unpack(
 			"IIIIII*", data
 		)
 		
@@ -115,8 +113,8 @@ class Connection:
 		payload, trailing_data = data[:payload_len], data[payload_len:]
 
 		decoded_pkts = []
-		if payload_type in packets.PACKETS:
-			pkt = packets.PACKETS[payload_type].decode(payload)
+		if payload_type in PACKETS:
+			pkt = PACKETS[payload_type].decode(payload)
 			decoded_pkts.append(pkt)
 		else:
 			raise Exception(f"Undecoded packet of type {payload_type}")
