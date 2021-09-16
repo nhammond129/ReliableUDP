@@ -22,6 +22,8 @@ class TestPacket:
 	def __str__(self):
 		return f"<TestPacket test_number={self.test_number}>"
 
+    __repr__ = __str__
+
 @packets.packet(1)
 class TestPacket2:
 	format = 'f'
@@ -38,6 +40,8 @@ class TestPacket2:
 
 	def __str__(self):
 		return f"<TestPacket2 test_number={self.test_number}>"
+
+    __repr__ = __str__
 
 def main():
     server = Server('localhost', 8888)
