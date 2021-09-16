@@ -1,4 +1,5 @@
 import ctypes
+import socket
 from .sockets import ThreadedUDPSocket
 from .encoding import pack, unpack
 from .packets import PACKETS
@@ -16,11 +17,11 @@ class ReliableUDPConnection:
 
 	Thus header length is 24 bytes.
 	"""
-	protocol_id = 1342
-	def __init__(self, host, port):
+	def __init__(self, host, port, protocol_id: ctypes.uint32 = 1234):
 		self.host = host
 		self.port = port
 		self.buffer = b''
+		self.protocol_id: ctypes.uint32 = protocol_id
 		self.ack: ctypes.uint32 = 0
 		self.ack_bitfields: ctypes.uint32 = 0
 		self.sequence: ctypes.uint32 = 0
@@ -147,14 +148,15 @@ class ReliableUDPConnection:
 
 		return (decoded_pkts + rest, trailing_data)
 
-def Client(host, port, socketclass=ThreadedUDPSocket):
+def Client(host, port, socketclass: socket.socket = ThreadedUDPSocket):
 	conn = ReliableUDPConnection(host, port)
 	conn.socket = socketclass(host, 0, on_recv = conn.on_recv)
 	return conn
 
 class Server:
-	def __init__(self, host, port, socketclass=ThreadedUDPSocket):
+	def __init__(self, host, port, connectionclass=ReliableUDPConnection, socketclass=ThreadedUDPSocket):
 		self.socket = socketclass(host, port, on_recv=self.on_recv)
+		self.connectionclass = connectionclass
 		self.connections = {}
 
 	def add_client(self, addr, port):
