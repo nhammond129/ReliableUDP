@@ -17,7 +17,7 @@ class ReliableUDPConnection:
 
 	Thus header length is 24 bytes.
 	"""
-	def __init__(self, host, port, protocol_id: ctypes.uint32 = 1234):
+	def __init__(self, host, port, protocol_id = 1234):
 		self.host = host
 		self.port = port
 		self.buffer = b''
