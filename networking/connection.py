@@ -117,10 +117,7 @@ class ReliableUDPConnection:
 			# set corresponding ack bit
 			self.ack_bitfields & (1 << abs(self.ack - seq))
 		else:
-			# older than the the previous 33 packets
-			# let it go unacked
-			# TODO: let packets require acking, send special ack-packet for them if they drop too far?
-			pass
+			pass  # older than the the previous 33 packets
 
 		# sequence number was acked
 		if ack_seq in self.unacked:
